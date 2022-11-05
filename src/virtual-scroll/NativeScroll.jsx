@@ -215,7 +215,7 @@ const NativeScroll = (props) => {
         content.animation.off()
         scrollbarTrack.animation.off()
 
-        document.onpointermove = pointerMove => {
+        const onPointerMove = (pointerMove) => {
             handleMovementMouse(control, pointerMove, pointerStart)
             handleBoundMouse(control)
 
@@ -225,15 +225,19 @@ const NativeScroll = (props) => {
             content.setTranslate(control.content.positionY)
         }
 
-        document.onpointerup = () => {
+        const onPointerUp = () => {
             scrollbarTrack.positionYEnd = scrollbarTrack.positionYMove
             scrollbarTrack.isPointer = false
+
             content.animation.on()
             scrollbarTrack.animation.on()
 
-            document.onpointermove = null
-            document.onpointerup = null
+            document.removeEventListener('pointermove', onPointerMove)
+            document.removeEventListener('pointerup', onPointerUp)
         }
+
+        document.addEventListener('pointermove', onPointerMove)
+        document.addEventListener('pointerup', onPointerUp)
     }
 
     useEffect(() => {
