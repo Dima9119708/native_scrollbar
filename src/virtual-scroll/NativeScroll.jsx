@@ -29,23 +29,28 @@ const handleMovementMouse = (
     control,
     pointerMoveY,
     pointerStartY,
+    pointerEnd,
 ) => {
-    control.scrollbarTrack.positionYMove = ((pointerMoveY.pageY - pointerStartY.pageY) + control.scrollbarTrack.positionYEnd)
+    const { scrollbarTrack } = control
+    const { pointer } = scrollbarTrack
+
+    pointer.move = (((pointerMoveY.pageY - pointerStartY.pageY)) + pointerEnd)
 }
 
 const handleBoundMouse = (
     control,
 ) => {
-    const { height } = control.scrollbar
-    const { height: trackHeight } = control.scrollbarTrack
-    const { scrollbarTrack } = control
+    const { scrollbar, scrollbarTrack } = control
+    const { pointer } = scrollbarTrack
 
-    if ((scrollbarTrack.positionYMove + trackHeight) > height) {
-        scrollbarTrack.positionYMove = height - trackHeight
+    const CALC_SCROLLBAR_HEIGHT = scrollbar.height - scrollbarTrack.height
+
+    if (pointer.move > CALC_SCROLLBAR_HEIGHT) {
+        pointer.move = CALC_SCROLLBAR_HEIGHT
     }
 
-    if (scrollbarTrack.positionYMove < 0) {
-        scrollbarTrack.positionYMove = 0
+    if (pointer.move < 0) {
+        pointer.move = 0
     }
 }
 
@@ -74,11 +79,12 @@ const calcScrolledScrollbarTrack = (control) => {
 
 const calcScrolledContent = (control) => {
     const { fullHeight, viewHeight, scrollbarTrack, scrollbar } = control
+    const { pointer } = scrollbarTrack
 
     const CALC_SCROLLBAR = scrollbar.height - scrollbarTrack.height
     const CALC_CONTENT = fullHeight - viewHeight
 
-    return -(((((scrollbarTrack.positionYMove * 100) / CALC_SCROLLBAR) * CALC_CONTENT) / 100))
+    return -(((((pointer.move * 100) / CALC_SCROLLBAR) * CALC_CONTENT) / 100))
 }
 
 const isNeedScrollbar = (clientHeight, scrollHeight) => clientHeight !== scrollHeight;
@@ -129,8 +135,11 @@ const NativeScroll = (props) => {
         scrollbarTrack: {
             height: null,
             isPointer: false,
-            positionYMove: 0,
-            positionYEnd: 0,
+            pointer: {
+                diff: 0,
+                move: 0,
+                start: 0
+            },
             setHeight: (height) => {
                 css(scrollbarTrackRef.current, {
                     height: `${height}px`
@@ -168,24 +177,19 @@ const NativeScroll = (props) => {
             return
         }
 
-        const { scrollbarTrack, content } = control
+        const { scrollbarTrack } = control
 
         control.show = true
         control.viewHeight = clientHeight
         control.fullHeight = scrollHeight
         control.scrollbar.height = height
         control.scrollbarTrack.height = calcHeightScrollbarTrack(control)
-
-        // const calc = calcScrolledScrollbarTrack(control)
-        //
-        // content.setTranslate(control.content.positionY)
-        //
-        // if (!scrollbarTrack.isPointer) {
-        //     scrollbarTrack.positionYEnd = calc
-        //     scrollbarTrack.setTop(calc)
-        // }
-        //
         control.scrollbarTrack.setHeight(control.scrollbarTrack.height)
+
+        const calc = calcScrolledScrollbarTrack(control)
+
+        scrollbarTrack.pointer.start = calc
+        scrollbarTrack.setTop(calc)
     }
 
     const onWheel = (event) => {
@@ -201,33 +205,32 @@ const NativeScroll = (props) => {
 
         content.setTranslate(control.content.positionY)
 
-        scrollbarTrack.positionYEnd = calc
+        scrollbarTrack.pointer.start = calc
         scrollbarTrack.setTop(calc)
     }
 
-    const onPointerDown = (pointerStart) => {
-        pointerStart.preventDefault()
+    const onPointerDown = (eventStart) => {
+        eventStart.preventDefault()
 
         const { content, scrollbarTrack } = control
 
-        scrollbarTrack.isPointer = true
-        scrollbarTrack.positionYMove = pointerStart.pageY
+        const pointerStartY = scrollbarTrack.pointer.start
+
         content.animation.off()
         scrollbarTrack.animation.off()
 
-        const onPointerMove = (pointerMove) => {
-            handleMovementMouse(control, pointerMove, pointerStart)
+        const onPointerMove = (eventMove) => {
+            handleMovementMouse(control, eventMove, eventStart, pointerStartY)
             handleBoundMouse(control)
 
             content.positionY = calcScrolledContent(control)
 
-            scrollbarTrack.setTop(control.scrollbarTrack.positionYMove)
+            scrollbarTrack.setTop(control.scrollbarTrack.pointer.move)
             content.setTranslate(control.content.positionY)
         }
 
         const onPointerUp = () => {
-            scrollbarTrack.positionYEnd = scrollbarTrack.positionYMove
-            scrollbarTrack.isPointer = false
+            scrollbarTrack.pointer.start = scrollbarTrack.pointer.move
 
             content.animation.on()
             scrollbarTrack.animation.on()
@@ -242,7 +245,7 @@ const NativeScroll = (props) => {
 
     useEffect(() => {
         initial()
-    }, [children, initial])
+    }, [children])
 
     return (
         <div ref={wrapperRef} onWheel={onWheel} className="native-scroll">

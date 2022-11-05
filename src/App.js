@@ -10,7 +10,7 @@ function App() {
   useEffect(() => {
     // setInterval(() => {
     //   setCounts((prevState) => prevState + 2)
-    // }, 200)
+    // }, 50)
   }, [])
 
   return (
@@ -25,9 +25,9 @@ function App() {
             <div className="item">TEST 2</div>
             <div className="item">TEST 2</div>
             <div className="item">TEST 2</div>
-            { Array.from({ length: 200 }).map((_, idx) =>  <div key={idx} className="item">TEST {idx}</div>) }
+            { Array.from({ length: 1000 }).map((_, idx) =>  <div key={idx} className="item">TEST {idx}</div>) }
 
-            { count && Array.from({ length: count }).map((_, idx) =>  <div key={idx} className="item">{idx}</div>) }
+            { count && Array.from({ length: count }).map((_, idx) =>  <div key={idx} className="item">TEST {idx}</div>) }
           </div>
         </NativeScroll>
       </div>
@@ -40,9 +40,21 @@ function App() {
             <div className="item">TEST 2</div>
             <div className="item">TEST 2</div>
             { Array.from({ length: 100 }).map((_, idx) =>  <div key={idx} className="item">TEST {idx}</div>) }
-            { !!count && Array.from({ length: count }).map((_, idx) =>  <div key={idx} className="item">{idx}</div>) }
+            {/*{ !!count && Array.from({ length: count }).map((_, idx) =>  <div key={idx} className="item">{idx}</div>) }*/}
           </div>
         </SimpleBar>
+
+        <div style={{ overflowY: 'auto', height: 500 }}>
+          <div className="wrapper">
+            <div className="item">TEST 1</div>
+            <div className="item">TEST 2</div>
+            <div className="item">TEST 2</div>
+            <div className="item">TEST 2</div>
+            <div className="item">TEST 2</div>
+            { Array.from({ length: 100 }).map((_, idx) =>  <div key={idx} className="item">TEST {idx}</div>) }
+            {/*{ !!count && Array.from({ length: count }).map((_, idx) =>  <div key={idx} className="item">{idx}</div>) }*/}
+          </div>
+        </div>
 
       </header>
     </div>
