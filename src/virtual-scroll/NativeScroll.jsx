@@ -87,6 +87,11 @@ const calcScrolledContent = (control) => {
     return -(((((pointer.move * 100) / CALC_SCROLLBAR) * CALC_CONTENT) / 100))
 }
 
+const preventDefault = e => e.preventDefault()
+
+const browserOffScroll = () => window.addEventListener("wheel", preventDefault, { passive:false })
+const browserOnScroll = () => window.removeEventListener("wheel", preventDefault)
+
 const isNeedScrollbar = (clientHeight, fullHeight) => {
     if (fullHeight > clientHeight) {
         return true
@@ -257,12 +262,16 @@ const NativeScroll = (props) => {
         document.addEventListener('pointerup', onPointerUp)
     }
 
+    const onPointerEnter = () => browserOffScroll()
+
+    const onPointerLeave = () => browserOnScroll()
+
     useEffect(() => {
         init()
     }, [children])
 
     return (
-        <div ref={wrapperRef} onWheel={onWheel} className="native-scroll" style={style}>
+        <div ref={wrapperRef} onWheel={onWheel} onPointerEnter={onPointerEnter} onPointerLeave={onPointerLeave} className="native-scroll" style={style}>
             <div className="native-scroll-content" ref={contentRef}>
                 { children }
             </div>
