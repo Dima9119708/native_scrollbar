@@ -27,14 +27,14 @@ const handleBoundWheel = (
 
 const handleMovementMouse = (
     control,
-    pointerMoveY,
-    pointerStartY,
-    pointerEnd,
+    eventMoveY,
+    eventStartY,
+    pointerStart,
 ) => {
     const { scrollbarTrack } = control
     const { pointer } = scrollbarTrack
 
-    pointer.move = (((pointerMoveY.pageY - pointerStartY.pageY)) + pointerEnd)
+    pointer.move = (((eventMoveY.pageY - eventStartY.pageY)) + pointerStart)
 }
 
 const handleBoundMouse = (
@@ -58,7 +58,7 @@ const calcHeightScrollbarTrack = (control) => {
     const { fullHeight, viewHeight } = control
     const { height } = control.scrollbar
 
-    let percent =  ((viewHeight * 100) / fullHeight)
+    let percent = ((viewHeight * 100) / fullHeight)
 
     if (percent < 5) {
         percent = 5
@@ -87,12 +87,19 @@ const calcScrolledContent = (control) => {
     return -(((((pointer.move * 100) / CALC_SCROLLBAR) * CALC_CONTENT) / 100))
 }
 
-const isNeedScrollbar = (clientHeight, scrollHeight) => clientHeight !== scrollHeight;
+const isNeedScrollbar = (clientHeight, fullHeight) => {
+    if (fullHeight > clientHeight) {
+        return true
+    }
+}
 
 const css = (ref, style) => Object.assign(ref.style, style)
 
 const NativeScroll = (props) => {
-    const { children } = props
+    const {
+        style,
+        children
+    } = props
 
     const wrapperRef = useRef()
     const contentRef = useRef()
@@ -167,32 +174,39 @@ const NativeScroll = (props) => {
 
     const control = controlRef.current
 
-    const initial = () => {
-        const { clientHeight, scrollHeight } = wrapperRef.current
-        const { height } = scrollbarRef.current.getBoundingClientRect()
+    const init = () => {
+        const { clientHeight } = wrapperRef.current
 
-        if (!isNeedScrollbar(clientHeight, scrollHeight)) {
+        const HEIGHT_CONTENT = contentRef.current.getBoundingClientRect().height
+        const HEIGHT_SCROLLBAR = scrollbarRef.current.getBoundingClientRect().height
+
+        if (!isNeedScrollbar(clientHeight, HEIGHT_CONTENT)) {
             control.scrollbar.setShow(false)
             control.show = false
             return
+        } else {
+            control.scrollbar.setShow(true)
+            control.show = true
         }
 
         const { scrollbarTrack } = control
 
-        control.show = true
         control.viewHeight = clientHeight
-        control.fullHeight = scrollHeight
-        control.scrollbar.height = height
+        control.fullHeight = HEIGHT_CONTENT
+        control.scrollbar.height = HEIGHT_SCROLLBAR
         control.scrollbarTrack.height = calcHeightScrollbarTrack(control)
+
         control.scrollbarTrack.setHeight(control.scrollbarTrack.height)
 
         const calc = calcScrolledScrollbarTrack(control)
 
         scrollbarTrack.pointer.start = calc
+
         scrollbarTrack.setTop(calc)
     }
 
     const onWheel = (event) => {
+        window.onscroll = null
         if (!control.show) return
 
         const { scrollbarTrack, content } = control
@@ -244,11 +258,11 @@ const NativeScroll = (props) => {
     }
 
     useEffect(() => {
-        initial()
+        init()
     }, [children])
 
     return (
-        <div ref={wrapperRef} onWheel={onWheel} className="native-scroll">
+        <div ref={wrapperRef} onWheel={onWheel} className="native-scroll" style={style}>
             <div className="native-scroll-content" ref={contentRef}>
                 { children }
             </div>
